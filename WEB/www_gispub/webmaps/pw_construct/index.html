@@ -88,7 +88,9 @@
                 //setup event handlers for the next/previous buttons
                 on(dom.byId("previous"), "click", selectPrevious);
                 on(dom.byId("next"), "click", selectNext);
-
+                // in the online example the map is created in a function whose response is then passed to a new funnction
+                // the map scope  gets lost so its set to the global window.map i have put the map here in the ready function
+                // so the need toset the map to a new map is eliminated also keep in mind infoTemplates must be set as a result
                 var bounds = new Extent({xmin: 2526488.307204361
                     ,ymin: 6968421.825135857
                     ,xmax: 2574514.620465
@@ -105,11 +107,11 @@
                 var layer = new esri.layers.ArcGISDynamicMapServiceLayer(urls.urlMs);
                 map.addLayer(baseMap);
                 map.addLayer(layer);
-                var infoTemplate = new InfoTemplate("</b>${PROJECT_NAME}<br>", "${PROJECT_SCOPE}");
+                var infoTemplate = new InfoTemplate("</b>${PROJECT_NAME}<br>","<h3>${PROJECT_NAME}&nbsp</h3>${PROJECT_SCOPE}");
                 var featureLayerOptions = {
                     id: "Projects"
                     , mode: FeatureLayer.MODE_AUTO
-                    , outFields: ["PROJECT_NAME","PROJECT_SCOPE"]
+                    , outFields: ["PROJECT_NAME","PROJECT_SCOPE","PROJECT_TYPE"]
                     , infoTemplate: infoTemplate
                 };
                 var features = new FeatureLayer(
@@ -121,7 +123,7 @@
                 map.infoWindow.set("popupWindow",false);
                 //window.map = map;
 
-                    //set the popup's popupWindow property to false. This prevents the popup from displaying
+                    //set the popup's popupWindow property to false. This prevents the popup from displaying but the infoTemplate still caries the field info
 
 
                     initializeSidebar(map);
@@ -147,7 +149,7 @@
                     //When features are associated with the  map's info window update the sidebar with the new content.
                     connect.connect(popup, "onSetFeatures", function(){
                         displayPopupContent(popup.getSelectedFeature());
-                        dom.byId("featureCount").innerHTML = popup.features.length + " feature(s) selected";
+                        dom.byId("featureCount").innerHTML = "<h2>" + popup.features[0].attributes["PROJECT_TYPE"] + "</h2>" ;
 
                         //enable navigation if more than one feature is selected
                         popup.features.length > 1 ? domUtils.show(dom.byId("pager")) : domUtils.hide(dom.byId("pager"));
