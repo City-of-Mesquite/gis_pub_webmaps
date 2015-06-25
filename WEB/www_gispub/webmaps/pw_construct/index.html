@@ -1,192 +1,204 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
 <!DOCTYPE html>
+<html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
-    <title>City of Mesquite Public Works Construction Projects| Basic Search</title>
-    <link rel="stylesheet" href="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/dijit/themes/claro/claro.css">
-    <link rel="stylesheet" href="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/esri/css/esri.css">
-    <style type="text/css">
-        html,
-        body,
-        #map {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>Popup - Sidebar</title>
+    <link rel="stylesheet" href="http://js.arcgis.com/3.13/dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" href="http://js.arcgis.com/3.13/esri/css/esri.css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open Sans">
+
+    <style>
+        html, body {
+            height:100%;
+            width:100%;
+            margin:0;
+            padding:0;
+            margin:0;
+            font-family: "Open Sans";
         }
-        #search {
-            display: block;
-            position: absolute;
-            z-index: 2;
-            top: 20px;
-            left: 74px;
+        #leftPane {
+            width:20%;
+            margin:0;
+            border:none;
+        }
+        #map {
+            padding:0;
+        }
+        .nav {
+            padding: 5px 10px;
+            background: #4479BA;
+            color: #FFF;
+            border-radius: 5px;
+            border: solid 1px #20538D;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+
+        }
+        #header {
+            text-align: center;
+            height:60px;
+            border-bottom: solid 1px #ccc;
         }
     </style>
-    <script type="text/javascript"  src="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13compact/init.js"></script>
+
+    <script type="text/javascript"  src="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/init.js"></script>
     <script type="text/javascript">
         require([
-            "dojo/dom-construct"
-            ,"esri/geometry/Extent"
-            ,"esri/map"
-            ,"esri/InfoWindowBase"
-            ,"esri/InfoTemplate"
-            ,"esri/layers/FeatureLayer"
-            ,"esri/dijit/Search"
-            ,"esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol"
-            ,"esri/renderers/SimpleRenderer", "esri/graphic", "esri/lang"
-            ,"esri/Color", "dojo/number", "dojo/dom-style"
-            ,"dijit/TooltipDialog", "dijit/popup"
-            ,"dojo/domReady!"
-        ], function (
-                domConstruct
-                ,Extent
-                ,Map
-                ,InfoWindowBase
-                ,InfoTemplate
-                ,FeatureLayer
-                ,Search
-                ,SimpleFillSymbol, SimpleLineSymbol
-                ,SimpleRenderer, Graphic, esriLang
-                ,Color, number, domStyle
-                ,TooltipDialog, dijitPopup
-                ) {
-            var urls = {
-                "urlBm": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/cached_services/basemap_parcels_bldg_add/MapServer"
-                ,"urlMs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/MapServer"
-                ,"urlFs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/FeatureServer/0"
-            };
+            "dojo/ready",
+            "dojo/on",
+            "dojo/_base/connect",
+            "dojo/dom",
+            "dijit/registry",
+            "dojo/dom-construct",
+            "dojo/parser",
+            "dijit/layout/BorderContainer",
+            "dijit/layout/ContentPane",
+            "esri/map",
+            "esri/geometry/Extent",
+            "esri/layers/FeatureLayer",
+            "esri/InfoTemplate",
+            "esri/arcgis/utils",
+            "esri/domUtils",
+            "esri/dijit/Popup"
+        ], function(
+                ready,
+                on,
+                connect,
+                dom,
+                registry,
+                domConstruct,
+                parser,
+                BorderContainer,
+                ContentPane,
+                Map,
+                Extent,
+                FeatureLayer,
+                InfoTemplate,
+                arcgisUtils,
+                domUtils,
+                Popup
+        ) {
+            ready(function(){
 
-            var bounds = new Extent({
-                xmin: 2526488.307204361,
-                ymin: 6968421.825135857,
-                xmax: 2574514.620465,
-                ymax: 6996793.93402322 ,
-                "spatialReference": {"wkid":102738}
-            });
+                parser.parse();
 
-            var map = new esri.Map("mapDiv", {
-                scale:  144447.638572,
-                extent: bounds
-            });
-            var baseMap = new esri.layers.ArcGISTiledMapServiceLayer(urls.urlBm);
-            var layer = new esri.layers.ArcGISDynamicMapServiceLayer(urls.urlMs);
-            map.addLayer(baseMap);
-            map.addLayer(layer);
+                //setup event handlers for the next/previous buttons
+                on(dom.byId("previous"), "click", selectPrevious);
+                on(dom.byId("next"), "click", selectNext);
 
+                var bounds = new Extent({
+                    xmin: 2526488.307204361,
+                    ymin: 6968421.825135857,
+                    xmax: 2574514.620465,
+                    ymax: 6996793.93402322 ,
+                    "spatialReference": {"wkid":102738}
+                });
+                var map = new Map("map",{extent: bounds});
+                var urls = {
+                     "urlBm": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/cached_services/basemap_parcels_bldg_add/MapServer"
+                    ,"urlMs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/MapServer"
+                    ,"urlFs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/FeatureServer/0"
+                };
 
-
-            var s = new Search({map: map}, "searchDiv");
-            s.startup();
-            function mapInit() {
-                var infoWindow = new InfoWindowBase(null, domConstruct.create("div", null, null, map.root));
-                infoWindow.startup();
-                map.setInfoWindow(infoWindow);
-
-                var template = new InfoTemplate();
-                template.setTitle("<b>${PROJECT_TYPE} - ${PROJECT_NAME}</b>");
-                template.setContent("*");
-
-
-                var resizeTimer ;
-
+                var baseMap = new esri.layers.ArcGISTiledMapServiceLayer(urls.urlBm);
+                var layer = new esri.layers.ArcGISDynamicMapServiceLayer(urls.urlMs);
+                map.addLayer(baseMap);
+                map.addLayer(layer);
+                var infoTemplate = new InfoTemplate("</b>${PROJECT_NAME}<br>", "${PROJECT_SCOPE}");
                 var featureLayerOptions = {
                     id: "Projects"
                     , mode: FeatureLayer.MODE_AUTO
-                    , outFields: ["*"]
-                    , infoTemplate: template
+                    , outFields: ["PROJECT_NAME","PROJECT_SCOPE"]
+                    , infoTemplate: infoTemplate
                 };
+                var features = new FeatureLayer(
+                                                urls.urlFs
+                                               ,featureLayerOptions
+                                             );
+
+                map.addLayer(features);
+                map.infoWindow.set("popupWindow",false);
+                //window.map = map;
+
+                    //set the popup's popupWindow property to false. This prevents the popup from displaying
 
 
+                    initializeSidebar(map);
 
-                var flPwProjects = new FeatureLayer(urls.urlFs,featureLayerOptions);
+                function initializeSidebar(map){
+                    var popup = map.infoWindow;
 
-
-                map.addLayer(flPwProjects);
-
-                map.infoWindow.resize(200, 75);
-
-            }   // mapInit
-            function mapInit2(){
-
-                var featureLayerOptions = {
-                    id: "Projects"
-                    , mode: FeatureLayer.MODE_AUTO
-                    , outFields: ["*"]
-                    , infoTemplate: template
-                };
-
-
-
-                var flPwProjects = new FeatureLayer(urls.urlFs,featureLayerOptions);
-
-               // flPwProjects.setDefinitionExpression("OBJECTID > 0");
-
-                var symbol = new SimpleLineSymbol(
-                        SimpleLineSymbol.STYLE_SOLID,
-                        new Color([255,255,255,0.35]),
-                        1
-                );
-                flPwProjects.setRenderer(new SimpleRenderer(symbol));
-                map.addLayer(flPwProjects);
-
-                map.infoWindow.resize(245,125);
-
-                dialog = new TooltipDialog({
-                    id: "tooltipDialog",
-                    style: "position: absolute; width: 250px; font: normal normal normal 10pt Helvetica;z-index:100"
-                });
-                dialog.startup();
-
-                var highlightSymbol = new SimpleLineSymbol(
-                        SimpleLineSymbol.STYLE_SOLID,
-                        new Color([255,0,0]), 3
-                );
-                //close the dialog when the mouse leaves the highlight graphic
-                map.on("load", function(){
-                    map.graphics.enableMouseEvents();
-                    map.graphics.on("mouse-out", closeDialog);
-
-                });
-
-                var test_var = new InfoWindowBase("test",{});
-
-
-                flPwProjects.on("click", function(evt){
-                    var t = "<b>${PROJECT_TYPE}</b><hr><b>PROJECT_NAME: </b>${PROJECT_NAME}<br>"
-                            + "<b>${PROJECT_SCOPE}</b><hr><b>PROJECT_SCOPE: </b>${PROJECT_SCOPE}<br>"
-                            + "<b>${PROJECT_STATUS}</b><hr><b>PROJECT_STATUS: </b>${PROJECT_STATUS}<br>"
-                            + "<b>${PROJECT_SCHEDULE}</b><hr><b>PROJECT_SCHEDULE: </b>${PROJECT_SCHEDULE}<br>"
-                            + "<b>${HYPERLINK}</b><hr><b>HYPERLINK: </b>${HYPERLINK}<br>";
-
-                    var content = esriLang.substitute(evt.graphic.attributes,t);
-                    var highlightGraphic = new Graphic(evt.graphic.geometry,highlightSymbol);
-                    map.graphics.add(highlightGraphic);
-
-                    dialog.setContent(content);
-
-                    domStyle.set(dialog.domNode, "opacity", 0.85);
-                    dijitPopup.open({
-                        popup: dialog,
-                        x: evt.pageX,
-                        y: evt.pageY
+                    //when the selection changes update the side panel to display the popup info for the
+                    //currently selected feature.
+                    connect.connect(popup, "onSelectionChange", function(){
+                        displayPopupContent(popup.getSelectedFeature());
                     });
-                });
 
-                function closeDialog() {
-                    map.graphics.clear();
-                    dijitPopup.close(dialog);
-                }   // close dialog
-            }   // mapinit2
-            map.on ("load",mapInit2);
-        }); // end req-func
+                    //when the selection is cleared remove the popup content from the side panel.
+                    connect.connect(popup, "onClearFeatures", function(){
+                        //dom.byId replaces dojo.byId
+                        dom.byId("featureCount").innerHTML = "Click to select feature(s)";
+                        //registry.byId replaces dijit.byId
+                        registry.byId("leftPane").set("content", "");
+                        domUtils.hide(dom.byId("pager"));
+                    });
+
+                    //When features are associated with the  map's info window update the sidebar with the new content.
+                    connect.connect(popup, "onSetFeatures", function(){
+                        displayPopupContent(popup.getSelectedFeature());
+                        dom.byId("featureCount").innerHTML = popup.features.length + " feature(s) selected";
+
+                        //enable navigation if more than one feature is selected
+                        popup.features.length > 1 ? domUtils.show(dom.byId("pager")) : domUtils.hide(dom.byId("pager"));
+                    });
+                }
+
+                function displayPopupContent(feature){
+                    if(feature){
+                        var content = feature.getContent();
+                        registry.byId("leftPane").set("content", content);
+                    }
+                }
+
+                function selectPrevious(){
+                    window.map.infoWindow.selectPrevious();
+                }
+
+                function selectNext(){
+                    window.map.infoWindow.selectNext();
+                }
+            });
+        });
     </script>
 </head>
 
-<body>
- <div id="searchDiv"></div>
- <div id="mapDiv"></div>
+<body class="claro">
+<div id="mainWindow" data-dojo-type="dijit/layout/BorderContainer"
+     data-dojo-props="design:'headline',gutters:false"
+     style="width:100%; height:100%;">
+    <div data-dojo-type="dijit/layout/BorderContainer" data-dojo-props="gutters:false"
+         region="left" style="width: 20%;height:100%;">
+        <div id="leftPane" data-dojo-type="dijit/layout/ContentPane"
+             data-dojo-props="region:'center'"></div>
+        <div id="header" data-dojo-type="dijit/layout/ContentPane"
+             data-dojo-props="region:'top'">
+            <div id="featureCount" style="margin-bottom:5px;">Click to select feature(s)</div>
+            <div id="pager" style="display:none;">
+                <a href='javascript:void(0);' id ="previous" class='nav' style="text-decoration: none;">
+                    < Prev
+                </a>
+
+                <a href='javascript:void(0);' id="next" class='nav'  style="text-decoration: none;">
+                    Next >
+                </a>
+            </div>
+        </div>
+    </div>
+    <div id="map" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'"></div>
+</div>
 </body>
 
 </html>
