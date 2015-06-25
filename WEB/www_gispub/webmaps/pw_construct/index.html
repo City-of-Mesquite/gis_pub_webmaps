@@ -107,7 +107,7 @@
 
                 map.infoWindow.resize(200, 75);
 
-            };   // mapInit
+            }   // mapInit
             function mapInit2(){
 
                 var featureLayerOptions = {
@@ -150,6 +150,8 @@
 
                 });
 
+                var test_var = new InfoWindowBase("test",{});
+
 
                 flPwProjects.on("click", function(evt){
                     var t = "<b>${PROJECT_TYPE}</b><hr><b>PROJECT_NAME: </b>${PROJECT_NAME}<br>"
@@ -175,19 +177,16 @@
                 function closeDialog() {
                     map.graphics.clear();
                     dijitPopup.close(dialog);
-                };   // close dialog
-            };   // mapinit2
+                }   // close dialog
+            }   // mapinit2
             map.on ("load",mapInit2);
         }); // end req-func
     </script>
 </head>
 
 <body>
-<div id="searchDiv"></div>
-<div id="mapDiv">
-
-
-</div>
+ <div id="searchDiv"></div>
+ <div id="mapDiv"></div>
 </body>
 
 </html>
