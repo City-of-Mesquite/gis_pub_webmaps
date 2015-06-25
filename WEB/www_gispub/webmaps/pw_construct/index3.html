@@ -1,0 +1,111 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
+
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>City of Mesquite Public Works Construction Projects| Basic Search</title>
+    <link rel="stylesheet" href="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/dijit/themes/claro/claro.css">
+    <link rel="stylesheet" href="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/esri/css/esri.css">
+    <style type="text/css">
+        html,
+        body,
+        #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #search {
+            display: block;
+            position: absolute;
+            z-index: 2;
+            top: 20px;
+            left: 74px;
+        }
+    </style>
+    <script type="text/javascript"  src="http://gispub.cityofmesquite.com:81/arcgis_js_api/library/3.13/3.13/init.js"></script>
+    <script type="text/javascript" >
+        require([
+            "dojo/dom-construct",
+            "esri/geometry/Extent",
+            "esri/map",
+            "esri/layers/FeatureLayer",
+            "esri/InfoTemplate",
+            "esri/dijit/Search",
+            "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol",
+            "esri/renderers/SimpleRenderer", "esri/graphic", "esri/lang",
+            "esri/Color", "dojo/number", "dojo/dom-style",
+            "dijit/TooltipDialog", "dijit/popup", "dojo/domReady!"
+
+        ], function (domConstruct,Extent,Map,FeatureLayer,InfoTemplate, Search,
+                     SimpleFillSymbol, SimpleLineSymbol,
+                     SimpleRenderer, Graphic, esriLang,
+                     Color, number, domStyle,
+                     TooltipDialog, dijitPopup
+                ) {
+
+            var urls = {
+                "urlBm": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/cached_services/basemap_parcels_bldg_add/MapServer",
+                "urlMs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/MapServer",
+                "urlFs": "http://gispub.cityofmesquite.com:6080/arcgis/rest/services/public_works/PW_City_Construction_Projects/FeatureServer/0"
+            };
+            var bounds = new Extent({
+                xmin: 2526488.307204361,
+                ymin: 6968421.825135857,
+                xmax: 2574514.620465,
+                ymax: 6996793.93402322 ,
+                "spatialReference": {"wkid":102738}
+            });
+            var map = new esri.Map("mapDiv",
+                    {
+                        scale:  144447.638572,
+                        extent: bounds
+                    }
+            );
+
+            var baseMap = new esri.layers.ArcGISTiledMapServiceLayer(urls.urlBm);
+            var layer = new esri.layers.ArcGISDynamicMapServiceLayer(urls.urlMs);
+            map.addLayer(baseMap);
+            map.addLayer(layer);
+            var resizeTimer ;
+            var infoTemplate = new InfoTemplate("Attributes", "${*}");
+            var featureLayerOptions = {
+                 id: "Projects"
+                , mode: FeatureLayer.MODE_AUTO
+                , outFields: ["*"]
+                , infoTemplate: infoTemplate
+            };
+
+
+
+            var flPwProjects = new FeatureLayer(urls.urlFs,featureLayerOptions);
+            //var flPwProjects = new esri.layers.FeatureLayer(Urls.urlFs);
+
+            map.addLayer(flPwProjects);
+
+            var s = new Search({
+                map: map
+
+            }, "search");
+            s.startup();
+
+
+
+
+        });
+    </script>
+</head>
+
+<body>
+<div id="search"></div>
+<div id="mapDiv">
+
+
+</div>
+</body>
+
+</html>

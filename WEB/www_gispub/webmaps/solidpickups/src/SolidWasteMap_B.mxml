@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:esri="http://www.esri.com/2008/ags"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   pageTitle="Solid Waste Map">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.layers.TiledMapServiceLayer;
+            import com.esri.ags.tasks.supportClasses.AddressToLocationsParameters;
+
+            import mx.events.FlexEvent;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.SpatialReference;
+			import com.esri.ags.events.GraphicEvent;
+			import com.esri.ags.geometry.Extent;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.tasks.supportClasses.AddressCandidate;
+			import com.esri.ags.utils.WebMercatorUtil;
+			
+			import mx.controls.Alert;
+			import mx.rpc.AsyncResponder;
+			
+			private function layerShowHandler(event:FlexEvent):void
+			{
+				// update the LODs/zoomslider to use/show the levels for the selected base map
+				var tiledLayer:TiledMapServiceLayer = event.target as TiledMapServiceLayer;
+				myMap.lods = tiledLayer.tileInfo.lods;
+			}
+			protected function fLayer_graphicAddHandler(event:GraphicEvent):void
+			{
+				event.graphic.addEventListener(MouseEvent.MOUSE_OVER, onMouseOverHandler);
+				event.graphic.addEventListener(MouseEvent.MOUSE_OUT, onMouseOutHandler);
+			}
+			protected function rLayer_graphicAddHandler(event:GraphicEvent):void
+			{
+				event.graphic.addEventListener(MouseEvent.MOUSE_OVER, onMouseOverHandler2);
+				event.graphic.addEventListener(MouseEvent.MOUSE_OUT, onMouseOutHandler);
+			}
+			protected function bLayer_graphicAddHandler(event:GraphicEvent):void
+			{
+				event.graphic.addEventListener(MouseEvent.MOUSE_OVER, onMouseOverHandler3);
+				event.graphic.addEventListener(MouseEvent.MOUSE_OUT, onMouseOutHandler);
+			}
+			private function onMouseOverHandler(event:MouseEvent):void
+			{
+				var gr:Graphic = Graphic(event.target);
+				gr.symbol = mouseOverSymbol;
+				myTextArea.htmlText = gr.attributes.GCDAREA
+				myMap.infoWindow.label = "Garbage Collection Day";
+				myMap.infoWindow.closeButtonVisible = false;
+				myMap.infoWindow.show(myMap.toMapFromStage(event.stageX, event.stageY));
+			}
+			
+			private function onMouseOverHandler2(event:MouseEvent):void
+			{
+				var gr:Graphic = Graphic(event.target);
+				gr.symbol = mouseOverSymbol;
+				myTextArea.htmlText = gr.attributes.RCDAREA
+				myMap.infoWindow.label = "Recycle Collection Day";
+				myMap.infoWindow.closeButtonVisible = false;
+				myMap.infoWindow.show(myMap.toMapFromStage(event.stageX, event.stageY));
+			}
+			
+			private function onMouseOverHandler3(event:MouseEvent):void
+			{
+				var gr:Graphic = Graphic(event.target);
+				gr.symbol = mouseOverSymbol;
+				myTextArea.htmlText = gr.attributes.DAY
+				myMap.infoWindow.label = "Large/Bulky Item Collection Day";
+				myMap.infoWindow.closeButtonVisible = false;
+				myMap.infoWindow.show(myMap.toMapFromStage(event.stageX, event.stageY));
+			}
+			
+			private function onMouseOutHandler(event:MouseEvent):void
+			{
+				var gr:Graphic = Graphic(event.target);
+				gr.symbol = null;
+				myMap.infoWindow.hide();
+			}	
+			
+			private function doFind():void
+			{
+                var parameters:AddressToLocationsParameters = new AddressToLocationsParameters();
+                //parameters such as 'SingleLine' are dependent upon the locator service used.
+                parameters.address = { SingleLine: onelineaddress.text };
+
+                // Use outFields to get back extra information
+                // The exact fields available depends on the specific locator service used.
+                parameters.outFields = [ "HouseNum" ];
+
+
+
+
+
+				
+				// Use outFields to get back extra information
+				// The exact fields available depends on the specific Locator used.
+
+				locator.outSpatialReference = myMap.spatialReference;
+                locator.addressToLocations(parameters, new AsyncResponder(onResult, onFault));
+				function onResult(candidates:Array, token:Object = null):void
+				{
+					if (candidates.length > 0)
+					{
+						var addressCandidate:AddressCandidate = candidates[0];
+						var myGraphic:Graphic = new Graphic();
+						
+						// for 9.3 servers, or anything else returning latlong:  myGraphic.geometry = WebMercatorUtil.geographicToWebMercator(addressCandidate.location);
+						
+						myGraphic.geometry = addressCandidate.location;
+						myGraphic.symbol = mySymbol;
+						myGraphic.toolTip = addressCandidate.address.toString();
+						myGraphic.id = "graphic";
+						myGraphicsLayer.add(myGraphic);
+						
+						myMap.centerAt(myGraphic.geometry as MapPoint);
+						
+						// Zoom to an appropriate level
+						// Note: your attribute and field value might differ depending on which Locator you are using...
+						if (addressCandidate.attributes.Loc_name.search("Street") > 0)
+						{
+							myMap.scale = 10000;
+						}
+						myInfo.htmlText = "<b>Found:</b><br/>" + addressCandidate.address.toString(); // formated address
+					}
+					else
+					{
+						myInfo.htmlText = "<b><font color='#FF0000'>Found nothing :(</b></font>";
+						
+						Alert.show("Sorry, couldn't find a location for this address"
+							+ "\nAddress: " + onelineaddress.text);
+					};
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					myInfo.htmlText = "<b>Failure</b>" + info.toString();
+					Alert.show("Failure: \n" + info.toString());
+				}
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Style>
+		@namespace esri "http://www.esri.com/2008/ags";
+		
+		esri|InfoWindow
+		{
+			content-background-alpha : 0.0;
+			background-color : yellow;
+			background-alpha : 1.0;
+			border-style : solid;
+		}
+	</fx:Style>
+	
+	<fx:Declarations>
+		<esri:Extent id="initialExtent"
+					 xmin="-10786000" ymin="3849400" xmax="-10721700" ymax="3879900">
+			<esri:SpatialReference wkid="102100"/>
+		</esri:Extent>
+		<esri:SimpleFillSymbol id="mouseOverSymbol" color="0xFFFF00" alpha="0.5">
+			<esri:SimpleLineSymbol width="7" color="0xFFFF00"/>
+		</esri:SimpleFillSymbol>
+		<esri:SimpleFillSymbol id="defaultsym" alpha="0.2">
+			<esri:SimpleLineSymbol width="1" color="0xFFFF00"/>
+		</esri:SimpleFillSymbol>
+		
+		<esri:Locator id="locator" url="http://gispub.cityofmesquite.com:6080/arcgis/rest/services/application_tools/DBO_LOCATOR_ADDRESS_POINTS_WGS/GeocodeServer"/>
+		
+		<esri:SimpleMarkerSymbol id="mySymbol"
+								 alpha="0.5"
+								 color="0xFF0000"
+								 size="21"
+								 style="circle">
+			<esri:SimpleLineSymbol width="2"/>
+		</esri:SimpleMarkerSymbol>
+	</fx:Declarations>
+	
+	<esri:Map id = "myMap" extent="{initialExtent}">
+		<esri:infoWindowContent>
+			<mx:TextArea id="myTextArea"
+						 width="250" height="75"/>
+		</esri:infoWindowContent>
+		<esri:ArcGISTiledMapServiceLayer url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer"/>
+		<esri:FeatureLayer id ="flayer" graphicAdd="fLayer_graphicAddHandler(event)" mode = "snapshot" outFields="GCDAREA"
+						   url="http://gispub.cityofmesquite.com:6080/arcgis/rest/services/onlinemaps/wastecollectionmap/MapServer/0" alpha="0.5" visible="{bb.selectedIndex == 0}"/>
+		<esri:FeatureLayer id ="rlayer" graphicAdd="rLayer_graphicAddHandler(event)" mode = "snapshot" outFields="RCDAREA"
+						   url="http://gispub.cityofmesquite.com:6080/arcgis/rest/services/onlinemaps/wastecollectionmap/MapServer/1" alpha="0.6" visible="{bb.selectedIndex == 1}"/>
+		<esri:FeatureLayer id ="blayer" graphicAdd="bLayer_graphicAddHandler(event)" mode = "snapshot" outFields="DAY"
+						   url="http://gispub.cityofmesquite.com:6080/arcgis/rest/services/onlinemaps/wastecollectionmap/MapServer/2" alpha="0.6" visible="{bb.selectedIndex == 2}"/>
+		<esri:GraphicsLayer id="myGraphicsLayer"/>
+	</esri:Map>
+	
+	<s:ButtonBar id="bb" horizontalCenter="0" top="20" requireSelection="true" alpha="1.0" fontWeight="bold" fontSize="14" height="4%" width = "75%">
+		<s:dataProvider>
+			<s:ArrayList>
+				<fx:String>Display Garbage Collection Areas</fx:String>
+				<fx:String>Display Recycle Collection Areas</fx:String>
+				<fx:String>Display Large/Bulk Items Collection Areas</fx:String>
+			</s:ArrayList>
+		</s:dataProvider>
+	</s:ButtonBar>
+	<s:Panel width="300"
+			 top="5"
+			 horizontalCenter="0"
+			 title="Find an address">
+		<s:layout>
+			<s:VerticalLayout horizontalAlign="center" verticalAlign="middle"/>
+		</s:layout>
+		<!-- Single line geocode -->
+		<s:TextInput id="onelineaddress"
+					 width="95%"
+					 enter="doFind()"
+					 text="380 New York St, Redlands"/>
+		<s:Button click="doFind()" label="Find Address"/>
+		<mx:Text id="myInfo"
+				 width="100%"
+				 color="0x00FF00"
+				 textAlign="center"/>
+	</s:Panel>
+</s:Application>
